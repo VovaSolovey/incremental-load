@@ -1,0 +1,5 @@
+model,transmission,body_type,drive_type,color,production_year,auto_key,engine_capacity,horsepower,engine_type,price,milage
+Honda Civic VIII,механика,седан,передний,серебристый,2007,1090478630,1.8,140,Бензин,350000,203500
+Honda Civic VIII,автомат,седан,передний,серебристый,2007,1086883440,1.8,140,Бензин,405000,160000
+Honda Accord IV,автомат,седан,передний,серебристый,1991,1097907998,2.0,133,Бензин,90000,270000
+Honda Civic  VIII Type S,робот,хэтчбек 3 дв.,передний,чёрный,2008,1098946022,1.8,140,Бензин,650000,145000
