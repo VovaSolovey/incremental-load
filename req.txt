@@ -1,6 +1,9 @@
+<<<<<<< HEAD
 antiorm==1.2.1
 db==0.1.1
 db-sqlite3==0.0.1
+=======
+>>>>>>> d03fc3dda2291e0030ac88fd2050480ef457a57a
 numpy==2.2.2
 pandas==2.2.3
 python-dateutil==2.9.0.post0
