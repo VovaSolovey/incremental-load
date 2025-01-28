@@ -1,7 +1,10 @@
 import sqlite3
 import pandas as pd
 
+# создаем подключение к нашей базе данных
 conn = sqlite3.connect('database.db')
+
+# создаем обьект курсор для работы с базой данных
 cursor = conn.cursor()
 
 # функция считывания CSV в SQl
@@ -14,7 +17,7 @@ def csv2sql(filePath, tableName):
 # функция преобразования из sql в csv
 def sql2csv(tableName, filePath):
 	df = pd.read_sql(sql=f'SELECT * FROM {tableName}', con=conn)
-	df.to_csv(filePath, con=conn, index=False)
+	df.to_csv(filePath, index=False)
 
 # функция отображения таблицы
 
