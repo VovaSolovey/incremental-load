@@ -31,8 +31,8 @@ def showTable(tableName):
 	print('_-' * 10 + '\n')
 
 
-# создаем таблицу hist_auto где будут ханиться все измененные и удаленные данные автомобилей
-# erfpsdftv if not exist чтобы она не падала если будет запущена функция повторно
+# создаем таблицу hist_auto где будут храниться все измененные и удаленные данные автомобилей
+#  if not exist чтобы она не падала если будет запущена функция повторно
 def init():
 	cursor.execute('''
 		CREATE TABLE IF NOT EXISTS hist_auto(
@@ -56,7 +56,7 @@ def init():
 	''')
 
 
-# создаем вью на основе хист авто чтобы проверять актуальные (с флагом 0 ) позиции иначе он будет добавлять и плодит ьдубли
+# создаем вью на основе hist_auto чтобы проверять актуальные (с флагом 0 ) позиции иначе он будет добавлять и плодить дубли
 # каждый раз при отсутствии этих значений в тмп авто
 	cursor.execute('''
 		CREATE VIEW IF NOT EXISTS v_hist_auto as
@@ -80,8 +80,7 @@ def init():
 	''')
 
 
-# создаем нтабличку новых данных из tmp_auto (условный срез данных за какой то промежуток времени) через
-# left join
+# создаем табличку новых данных из tmp_auto (условный срез данных за какой то промежуток времени)
 
 def new_rows():
 	cursor.execute("""
@@ -89,10 +88,11 @@ def new_rows():
 		SELECT 
 			*
 		FROM tmp_auto
-		WHERE auto_key not in (select auto_key from v_hist_auto)
+		WHERE auto_key not in (select auto_key from v_hist_auto) 
 		""")
 
 # определить удаленные из tmp_auto (в последствии мы на них будем вешать новые dttm и deleted_flg)
+
 def deleted_rows():
 	cursor.execute("""
 		CREATE TABLE tmp_deleted_rows as
@@ -102,7 +102,8 @@ def deleted_rows():
 		WHERE auto_key not in (select auto_key from tmp_auto)
 		""")
 
-# создаем функцию котоаря создает таблицу измененных записей
+# создаем функцию которая создает таблицу измененных записей
+
 def changed_rows():
 	cursor.execute('''
 		CREATE TABLE tmp_changed_rows as 
@@ -172,7 +173,9 @@ def change_hist_auto():
 
 
  # Изменяем в hist_auto end_dttm старые  значения которые есть в tmp_changed_rows на текущее время
- # (у новых измененных стартайм назначиться автоматически и энд дттм тех бесконечность)
+ # (у новых измененных start_dttm назначится автоматически и end_dttm тех бесконечность)
+ # указываем доп условие AND end_dttm = datetime('2999-12-31 23:59:59') чтобы изменять end_dttm только у последней записи
+
 	cursor.execute('''
 		UPDATE hist_auto
 		SET end_dttm = datetime('now', '-1 second')         
@@ -213,9 +216,10 @@ def change_hist_auto():
 		FROM tmp_changed_rows
 		""")
 
-#  работаем с таблицей удлаенных записей..сначала нам нужно изменть их  end_dttm на текущий момент
+# работаем с таблицей удаленных записей, сначала нам нужно изменть их end_dttm на текущий момент
 # но только там где datetime('2999-12-31 23:59:59') иначе будет меняться везде
 # и добавляем их в в хист авто изменяя флаг на 1
+# указываем доп условие AND end_dttm = datetime('2999-12-31 23:59:59') чтобы изменять end_dttm только у последней записи
 
 	cursor.execute('''
 		UPDATE hist_auto
