@@ -140,7 +140,8 @@ def change_hist_auto():
 				horsepower,
 				engine_type,
 				price,
-				milage)
+				milage
+				
 		FROM tmp_new_rows
 		""")
 
@@ -149,45 +150,87 @@ def change_hist_auto():
  # (у новых измененных стартайм назначиться автоматически и энд дттм тех бесконечность)
 	cursor.execute('''
 		UPDATE hist_auto
-		SET end_dttm = datetime('now', '-1 second')          # минус секунда чтобы небыло пересчений между старыми и новыми значениями чтобы небыло дублей
+		SET end_dttm = datetime('now', '-1 second')         
 		WHERE auto_key in (select auto_key from tmp_changed_rows)
-		# AND end_dttm = datetime('2999-12-31 23:59:59')   # учитываем те записи где end_dttm  тех бесконечностью чтобы не преназначались на все все прошлые записи
-					''')
+		''')
 
 #  и так же добавляем эти запись в нашу hist_auto(вот  у них старт и энд дттм заполнистя автоматически)
-		cursor.execute("""
+	cursor.execute("""
 		INSERT INTO hist_auto (
-				model,
-				transmission,
-				body_type,
-				drive_type,
-				color,
-				production_year,
-				auto_key,
-				engine_capacity,
-				horsepower,
-				engine_type,
-				price,
-				milage
-				)
+			model,
+			transmission,
+			body_type,
+			drive_type,
+			color,
+			production_year,
+			auto_key,
+			engine_capacity,
+			horsepower,
+			engine_type,
+			price,
+			milage
+			)
 		SELECT 
-				model,
-				transmission,
-				body_type,
-				drive_type,
-				color,
-				production_year,
-				auto_key,
-				engine_capacity,
-				horsepower,
-				engine_type,
-				price,
-				milage)
+			model,
+			transmission,
+			body_type,
+			drive_type,
+			color,
+			production_year,
+			auto_key,
+			engine_capacity,
+			horsepower,
+			engine_type,
+			price,
+			milage
+			
 		FROM tmp_changed_rows
 		""")
 
+#  работаем с таблицей удлаенных записей..сначала нам нужно изменть их  end_dttm на текущий момент
+# но только там где datetime('2999-12-31 23:59:59') иначе будет меняться везде
+# и добавляем их в в хист авто изменяя флаг на 1
 
+	cursor.execute('''
+		UPDATE hist_auto
+		SET end_dttm = datetime('now', '-1 second') 
+		WHERE auto_key in (select auto_key from tmp_deleted_rows)
+		''')
+	
 
+	cursor.execute("""
+		INSERT INTO hist_auto (
+			model,
+			transmission,
+			body_type,
+			drive_type,
+			color,
+			production_year,
+			auto_key,
+			engine_capacity,
+			horsepower,
+			engine_type,
+			price,
+			milage,
+			deleted_flg
+			)
+		SELECT 
+			model,
+			transmission,
+			body_type,
+			drive_type,
+			color,
+			production_year,
+			auto_key,
+			engine_capacity,
+			horsepower,
+			engine_type,
+			price,
+			milage,
+			1
+			
+		FROM tmp_deleted_rows
+		""")
 
 
 
@@ -199,6 +242,8 @@ csv2sql('store/data_1.csv', 'tmp_auto')
 new_rows()
 deleted_rows()
 changed_rows()
+
+change_hist_auto()
 
 showTable('tmp_auto')
 showTable('tmp_new_rows')
