@@ -55,6 +55,31 @@ def init():
 			)
 	''')
 
+
+# создаем вью на основе хист авто чтобы проверять актуальные (с флагом 0 ) позиции иначе он будет добавлять и плодит ьдубли
+# каждый раз при отсутствии этих значений в тмп авто
+	cursor.execute('''
+		CREATE VIEW IF NOT EXISTS v_hist_auto as
+		SELECT
+			id,
+			model,
+			transmission,
+			body_type,
+			drive_type,
+			color,
+			production_year,
+			auto_key,
+			engine_capacity,
+			horsepower,
+			engine_type,
+			price,
+			milage
+		FROM hist_auto
+		WHERE deleted_flg = 0
+		AND current_timestamp between start_dttm and end_dttm
+	''')
+
+
 # создаем нтабличку новых данных из tmp_auto (условный срез данных за какой то промежуток времени) через
 # left join
 
@@ -64,7 +89,7 @@ def new_rows():
 		SELECT 
 			*
 		FROM tmp_auto
-		WHERE auto_key not in (select auto_key from hist_auto)
+		WHERE auto_key not in (select auto_key from v_hist_auto)
 		""")
 
 # определить удаленные из tmp_auto (в последствии мы на них будем вешать новые dttm и deleted_flg)
@@ -73,7 +98,7 @@ def deleted_rows():
 		CREATE TABLE tmp_deleted_rows as
 		SELECT 
 			*
-		FROM hist_auto
+		FROM v_hist_auto
 		WHERE auto_key not in (select auto_key from tmp_auto)
 		""")
 
@@ -84,7 +109,7 @@ def changed_rows():
 		SELECT 
 			 t1.*
 		FROM tmp_auto t1
-		INNER JOIN hist_auto t2
+		INNER JOIN v_hist_auto t2
 		on t1.auto_key = t2.auto_key
 		WHERE 	t1.model 		   <> t2.model
 			or t1.transmission     <> t2.transmission
@@ -146,12 +171,13 @@ def change_hist_auto():
 		""")
 
 
- # Изменяем в hist_auto end_dttm у тех значений которые есть в tmp_changed_rows на текущее время
+ # Изменяем в hist_auto end_dttm старые  значения которые есть в tmp_changed_rows на текущее время
  # (у новых измененных стартайм назначиться автоматически и энд дттм тех бесконечность)
 	cursor.execute('''
 		UPDATE hist_auto
 		SET end_dttm = datetime('now', '-1 second')         
 		WHERE auto_key in (select auto_key from tmp_changed_rows)
+		AND end_dttm = datetime('2999-12-31 23:59:59')
 		''')
 
 #  и так же добавляем эти запись в нашу hist_auto(вот  у них старт и энд дттм заполнистя автоматически)
@@ -195,6 +221,7 @@ def change_hist_auto():
 		UPDATE hist_auto
 		SET end_dttm = datetime('now', '-1 second') 
 		WHERE auto_key in (select auto_key from tmp_deleted_rows)
+		AND end_dttm = datetime('2999-12-31 23:59:59')
 		''')
 	
 
@@ -231,14 +258,14 @@ def change_hist_auto():
 			
 		FROM tmp_deleted_rows
 		""")
-
+	conn.commit()
 
 
 
 delete_tmpTables()
 
 init()
-csv2sql('store/data_1.csv', 'tmp_auto')
+csv2sql('store/data_3.csv', 'tmp_auto')
 new_rows()
 deleted_rows()
 changed_rows()
@@ -246,6 +273,7 @@ changed_rows()
 change_hist_auto()
 
 showTable('tmp_auto')
+showTable('v_hist_auto')
 showTable('tmp_new_rows')
 showTable('tmp_changed_rows')
 showTable('tmp_deleted_rows')
