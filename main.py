@@ -108,6 +108,88 @@ def delete_tmpTables():
 	cursor.execute('DROP TABLE if exists tmp_deleted_rows')
 
 
+# добавляем записи в таблицу хист авто кроме тех которые заполняются автоматически по условию создании таблицы
+
+def change_hist_auto():
+
+# Добавляем новые записи в hist_auto из таблицы tmp_new_rows(создали ранее)
+	cursor.execute("""
+		INSERT INTO hist_auto (
+				model,
+				transmission,
+				body_type,
+				drive_type,
+				color,
+				production_year,
+				auto_key,
+				engine_capacity,
+				horsepower,
+				engine_type,
+				price,
+				milage
+				)
+		SELECT 
+				model,
+				transmission,
+				body_type,
+				drive_type,
+				color,
+				production_year,
+				auto_key,
+				engine_capacity,
+				horsepower,
+				engine_type,
+				price,
+				milage)
+		FROM tmp_new_rows
+		""")
+
+
+ # Изменяем в hist_auto end_dttm у тех значений которые есть в tmp_changed_rows на текущее время
+ # (у новых измененных стартайм назначиться автоматически и энд дттм тех бесконечность)
+	cursor.execute('''
+		UPDATE hist_auto
+		SET end_dttm = datetime('now', '-1 second')          # минус секунда чтобы небыло пересчений между старыми и новыми значениями чтобы небыло дублей
+		WHERE auto_key in (select auto_key from tmp_changed_rows)
+		# AND end_dttm = datetime('2999-12-31 23:59:59')   # учитываем те записи где end_dttm  тех бесконечностью чтобы не преназначались на все все прошлые записи
+					''')
+
+#  и так же добавляем эти запись в нашу hist_auto(вот  у них старт и энд дттм заполнистя автоматически)
+		cursor.execute("""
+		INSERT INTO hist_auto (
+				model,
+				transmission,
+				body_type,
+				drive_type,
+				color,
+				production_year,
+				auto_key,
+				engine_capacity,
+				horsepower,
+				engine_type,
+				price,
+				milage
+				)
+		SELECT 
+				model,
+				transmission,
+				body_type,
+				drive_type,
+				color,
+				production_year,
+				auto_key,
+				engine_capacity,
+				horsepower,
+				engine_type,
+				price,
+				milage)
+		FROM tmp_changed_rows
+		""")
+
+
+
+
+
 
 
 delete_tmpTables()
